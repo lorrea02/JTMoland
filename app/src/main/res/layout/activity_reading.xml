@@ -8,15 +8,16 @@
 
     <ImageView
         android:id="@+id/imageView3"
-        android:layout_width="215dp"
-        android:layout_height="wrap_content"
+        android:layout_width="313dp"
+        android:layout_height="73dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:scaleType="fitCenter"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@mipmap/ic_launcher" />
+        app:srcCompat="@drawable/jtlogo" />
 
     <LinearLayout
         android:layout_width="346dp"
@@ -37,6 +38,7 @@
             android:text="TextView"
             android:textColor="@android:color/black"
             android:textSize="18sp"
+            android:textStyle="bold"
             android:typeface="sans" />
 
         <TextView
@@ -195,7 +197,7 @@
 
             <TextView
                 android:id="@+id/textView18"
-                android:layout_width="86dp"
+                android:layout_width="30dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:fontFamily="@font/montserrat"
@@ -225,7 +227,7 @@
 
             <TextView
                 android:id="@+id/textView20"
-                android:layout_width="wrap_content"
+                android:layout_width="118dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:fontFamily="@font/montserrat"

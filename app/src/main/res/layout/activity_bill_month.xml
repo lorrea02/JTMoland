@@ -68,15 +68,16 @@
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="215dp"
-        android:layout_height="wrap_content"
+        android:layout_width="297dp"
+        android:layout_height="67dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:scaleType="fitCenter"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@mipmap/ic_launcher" />
+        app:srcCompat="@drawable/jtlogo" />
 
     <TextView
         android:id="@+id/textView2"

@@ -1,15 +1,19 @@
 package com.lorrea02.jtmoland;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -17,6 +21,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -30,12 +43,14 @@ public class Reading extends AppCompatActivity {
     Record currentSelected;
     int current = 0;
     int i = 0;
+    String billMonth = "";
     Messenger mMessenger = null;
     boolean isBind = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reading);
+
 
         tvName = findViewById(R.id.tvName);
         tvAddress =findViewById(R.id.tvAddress);
@@ -56,6 +71,7 @@ public class Reading extends AppCompatActivity {
         Intent iin = getIntent();
         Bundle b = iin.getExtras();
         records = b.getParcelableArrayList("records");
+        billMonth = b.getString("billMonth");
         currentSelected = records.get(i);
         bindService();
 
@@ -115,60 +131,164 @@ public class Reading extends AppCompatActivity {
                 }
                 else
                 {
-                    int consumption = current - currentSelected.getPrevious();
-                    tvConsumption.setText("" + consumption);
-                    tvAmtDue.setText("" + (ComputeAmtDue(consumption) + currentSelected.getUnpaid() + currentSelected.getCharges()));
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Reading.this);
+                    builder.setCancelable(true);
+                    builder.setTitle("JTMoland");
+                    builder.setMessage("Confirm processing?");
+                    builder.setPositiveButton("Confirm",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    int consumption = current - currentSelected.getPrevious();
+                                    tvConsumption.setText("" + consumption);
+                                    float amt = (ComputeAmtDue(consumption) + currentSelected.getUnpaid() + currentSelected.getCharges());
+                                    tvAmtDue.setText("" + amt);
+
+                                    currentSelected.setPresent(Integer.parseInt(etPresent.getText().toString().trim()));
+                                    currentSelected.setAmtDue(amt);
+                                    currentSelected.setRead(1);
+                                    records.set(i, currentSelected);
+
+                                    String text = "";
+                                    for(int i = 0; i< records.size(); i++)
+                                    {
+                                        text += records.get(i).toString() + "\n";
+                                    }
+                                    text = text.trim();
+
+                                    File dir = new File(Environment.getExternalStorageDirectory(), "JTMoland");
+                                    File dir2 = new File(dir, "Export");
+                                    String export = "export_" + billMonth + ".csv";
+                                    File file = new File(dir2, export);
+                                    try (Writer writer = new BufferedWriter(new OutputStreamWriter(
+                                            new FileOutputStream(file), "utf-8"))) {
+                                        writer.write(text);
+                                    } catch (UnsupportedEncodingException e) {
+                                        e.printStackTrace();
+                                    } catch (FileNotFoundException e) {
+                                        e.printStackTrace();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                    builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    });
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 }
 
+            }
+        });
+
+        btnSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(Reading.this);
+                builder.setTitle("Search via Meter Number:");
+
+                // Set up the input
+                final EditText input = new EditText(Reading.this);
+                // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(input);
+
+                // Set up the buttons
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String m_Text = input.getText().toString();
+                        boolean found = false;
+                        for(int j = 0; j < records.size(); j++)
+                        {
+                            if(records.get(j).getMeterNumber().equalsIgnoreCase(m_Text.trim()))
+                            {
+                                currentSelected = records.get(j);
+                                refreshData();
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(!found)
+                        {
+                            Toast.makeText(Reading.this, "Meter Number not found!", Toast.LENGTH_LONG).show();
+                        }
+                        else
+                        {
+                            dialog.dismiss();
+                        }
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder.show();
             }
         });
 
         btnPrint.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Date today = Calendar.getInstance().getTime();
-                SimpleDateFormat formatter = new SimpleDateFormat("MMM dd, yyyy hh:mm a");
-                String dateNow = formatter.format(today);
-                String headerTxt = centerTxt("JT Moland Realty") + "\n" +
-                        centerTxt("Development Corporation") + "\n\n" +
-                        centerTxt("STATEMENT OF ACCOUNT") + "\n\n" +
-                        centerTxt("Water Billing") + "\n" +
-                        "________________________________" + "\n\n" +
-                        "" + currentSelected.getName() + "\n" +
-                        "Meter Number: " + currentSelected.getMeterNumber() + "\n" +
-                        printAdd("Address: " + currentSelected.getAddress()) + "\n" +
-                        printAdd("Period Covered: " + currentSelected.getStartDate()) + "-" + currentSelected.getEndDate()  +"\n" +
-                        printAdd("Due Date: " + currentSelected.getDueDate()) + "\n" +
-                        "________________________________" + "\n\n";
 
-                String ballot = ("Present Reading: ") + current + "\n"
-                        + "Previous Reading: " + currentSelected.getPrevious() + "\n"
-                        + "Consumption in cu. m: " + (current - currentSelected.getPrevious()) + "\n\n"
-                        + "Balance from last: " + currentSelected.getUnpaid() + "\n"
-                        + "Current charge: " + ComputeAmtDue(current - currentSelected.getPrevious()) + "\n"
-                        + "Other charges: " + currentSelected.getCharges() + "\n"
-                        + "Total charges: " + (ComputeAmtDue(current - currentSelected.getPrevious()) + currentSelected.getUnpaid() + currentSelected.getCharges()) + "\n"
-                        + "\n\n"
-                        + "Note: If payment has been made,\n"
-                        + "please disregard this notice. \n"
-                        + "Thank you\n";
+                if(tvAmtDue.getText().toString().trim().equals(""))
+                {
+                    Toast.makeText(Reading.this, "Please process the record first.", Toast.LENGTH_LONG).show();
+                }
+                else
+                {
+                    Date today = Calendar.getInstance().getTime();
+                    SimpleDateFormat formatter = new SimpleDateFormat("MMM dd, yyyy hh:mm a");
+                    String dateNow = formatter.format(today);
+                    String headerTxt = centerTxt("JT Moland Realty") + "\n" +
+                            centerTxt("Development Corporation") + "\n\n" +
+                            centerTxt("STATEMENT OF ACCOUNT") + "\n\n" +
+                            centerTxt("Water Billing") + "\n" +
+                            "________________________________" + "\n\n" +
+                            "" + currentSelected.getName() + "\n" +
+                            "Meter Number: " + currentSelected.getMeterNumber() + "\n" +
+                            printAdd("Address: " + currentSelected.getAddress()) + "\n" +
+                            printAdd("Period Covered: " + currentSelected.getStartDate()) + "-" + currentSelected.getEndDate()  +"\n" +
+                            printAdd("Due Date: " + currentSelected.getDueDate()) + "\n" +
+                            "________________________________" + "\n\n";
 
-                String footerTxt = centerTxt("________________________________") + "\n Updated last: " + dateNow + "\n\n\n\n";
+                    String ballot = ("Present Reading: ") + current + "\n"
+                            + "Previous Reading: " + currentSelected.getPrevious() + "\n"
+                            + "Consumption in cu. m: " + (current - currentSelected.getPrevious()) + "\n\n"
+                            + "Balance from last: " + currentSelected.getUnpaid() + "\n"
+                            + "Current charge: " + ComputeAmtDue(current - currentSelected.getPrevious()) + "\n"
+                            + "Other charges: " + currentSelected.getCharges() + "\n"
+                            + "Total charges: " + (ComputeAmtDue(current - currentSelected.getPrevious()) + currentSelected.getUnpaid() + currentSelected.getCharges()) + "\n"
+                            + "\n\n"
+                            + "Note: If payment has been made,\n"
+                            + "please disregard this notice. \n"
+                            + "Thank you\n";
 
-                if (isBind) {
-                    ArrayList message = new ArrayList<>();
-                    message.add("" + headerTxt + ballot + footerTxt);
-                    Message msg = Message.obtain();
-                    msg.obj = message;
-                    try {
-                        mMessenger.send(msg);
-                        Toast.makeText(Reading.this, "Printing...", Toast.LENGTH_LONG).show();
-                        refreshData();
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
+                    String footerTxt = centerTxt("________________________________") + "\n Updated last: " + dateNow + "\n\n\n\n";
+
+                    if (isBind) {
+                        ArrayList message = new ArrayList<>();
+                        message.add("" + headerTxt + ballot + footerTxt);
+                        Message msg = Message.obtain();
+                        msg.obj = message;
+                        try {
+                            mMessenger.send(msg);
+                            Toast.makeText(Reading.this, "Printing...", Toast.LENGTH_LONG).show();
+                            refreshData();
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        Toast.makeText(Reading.this, "Bind muna", Toast.LENGTH_LONG).show();
                     }
-                } else {
-                    Toast.makeText(Reading.this, "Bind muna", Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -243,13 +363,44 @@ public class Reading extends AppCompatActivity {
 
     public void refreshData()
     {
-        tvName.setText(currentSelected.getName());
+        tvName.setText(currentSelected.getName().toUpperCase());
         tvAddress.setText(currentSelected.getAddress());
         tvSubd.setText(currentSelected.getSubd());
         tvMeter.setText("Meter Number : " + currentSelected.getMeterNumber());
         tvAccNum.setText("Account Number : " + currentSelected.getAccountNum());
         tvPrevious.setText("Previous Reading : " + currentSelected.getPrevious());
         tvUnpaid.setText("Unpaid Balance : " + currentSelected.getUnpaid());
+        if(currentSelected.getRead() == 1)
+        {
+            etPresent.setText(currentSelected.getPresent() + "");
+            int consump = currentSelected.getPresent() - currentSelected.getPrevious();
+            tvConsumption.setText("" + consump);
+            tvAmtDue.setText(currentSelected.getAmtDue() + "");
+            etPresent.setEnabled(false);
+            btnProcess.setEnabled(false);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(Reading.this);
+            builder.setTitle("Meter Number already read!");
+            // Set up the buttons
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+
+            builder.setIcon(R.drawable.iconmsg);
+
+            builder.show();
+        }
+        else
+        {
+            etPresent.setEnabled(true);
+            btnProcess.setEnabled(true);
+            etPresent.setText("");
+            tvConsumption.setText("");
+            tvAmtDue.setText("");
+        }
     }
 
     public float ComputeAmtDue(int consumption)

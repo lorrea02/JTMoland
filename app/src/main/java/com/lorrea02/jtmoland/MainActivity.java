@@ -23,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
         File dir = new File(Environment.getExternalStorageDirectory(), "JTMoland");
         if (!dir.exists() || !dir.isDirectory())
             dir.mkdirs();
+        File expDir = new File(dir, "Export");
+        if (!expDir.exists() || !expDir.isDirectory())
+            expDir.mkdirs();
 
 
         btnCode.setOnClickListener(new View.OnClickListener() {
