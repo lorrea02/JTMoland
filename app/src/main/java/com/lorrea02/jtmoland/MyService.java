@@ -251,7 +251,7 @@ public class MyService extends Service {
             try {
 
                 findBT();
-                openBT();
+//                openBT();
                 sendData(messageToPrint);
             } catch (IOException e) {
                 Toast.makeText(MyService.this, "" + e, Toast.LENGTH_LONG).show();
