@@ -19,6 +19,11 @@ public class Record implements Parcelable {
     private String endDate;
     private int read;
     private float amtDue;
+    private String waterRemarks;
+    private float monthlyBalance;
+    private float monthlyCharge;
+    private String monthlyRemarks;
+    private String lastUpdate;
 
     @Override
     public String toString() {
@@ -35,13 +40,18 @@ public class Record implements Parcelable {
                 + startDate + ","
                 + endDate + ","
                 + read + ","
-                + amtDue;
+                + amtDue + ","
+                + waterRemarks + ","
+                + monthlyBalance + ","
+                + monthlyCharge + ","
+                + monthlyRemarks + ","
+                + lastUpdate;
     }
 
     public Record() {
     }
 
-    public Record(String meterNumber, String name, String address, String subd, String accountNum, int previous, int present, float unpaid, float charges, String dueDate, String startDate, String endDate, int read, float amtDue) {
+    public Record(String meterNumber, String name, String address, String subd, String accountNum, int previous, int present, float unpaid, float charges, String dueDate, String startDate, String endDate, int read, float amtDue, String waterRemarks, float monthlyBalance, float monthlyCharge, String monthlyRemarks, String lastUpdate) {
         this.meterNumber = meterNumber;
         this.name = name;
         this.address = address;
@@ -56,6 +66,11 @@ public class Record implements Parcelable {
         this.endDate = endDate;
         this.read = read;
         this.amtDue = amtDue;
+        this.waterRemarks = waterRemarks;
+        this.monthlyBalance = monthlyBalance;
+        this.monthlyCharge = monthlyCharge;
+        this.monthlyRemarks = monthlyRemarks;
+        this.lastUpdate = lastUpdate;
     }
 
     public String getMeterNumber() {
@@ -170,7 +185,45 @@ public class Record implements Parcelable {
         this.amtDue = amtDue;
     }
 
+    public String getWaterRemarks() {
+        return waterRemarks;
+    }
 
+    public void setWaterRemarks(String waterRemarks) {
+        this.waterRemarks = waterRemarks;
+    }
+
+    public float getMonthlyBalance() {
+        return monthlyBalance;
+    }
+
+    public void setMonthlyBalance(float monthlyBalance) {
+        this.monthlyBalance = monthlyBalance;
+    }
+
+    public float getMonthlyCharge() {
+        return monthlyCharge;
+    }
+
+    public void setMonthlyCharge(float monthlyCharge) {
+        this.monthlyCharge = monthlyCharge;
+    }
+
+    public String getMonthlyRemarks() {
+        return monthlyRemarks;
+    }
+
+    public void setMonthlyRemarks(String monthlyRemarks) {
+        this.monthlyRemarks = monthlyRemarks;
+    }
+
+    public String getLastUpdate() {
+        return lastUpdate;
+    }
+
+    public void setLastUpdate(String lastUpdate) {
+        this.lastUpdate = lastUpdate;
+    }
 
     protected Record(Parcel in) {
         meterNumber = in.readString();
@@ -187,6 +240,11 @@ public class Record implements Parcelable {
         endDate = in.readString();
         read = in.readInt();
         amtDue = in.readFloat();
+        waterRemarks = in.readString();
+        monthlyBalance = in.readFloat();
+        monthlyCharge = in.readFloat();
+        monthlyRemarks = in.readString();
+        lastUpdate = in.readString();
     }
 
     @Override
@@ -210,6 +268,11 @@ public class Record implements Parcelable {
         dest.writeString(endDate);
         dest.writeInt(read);
         dest.writeFloat(amtDue);
+        dest.writeString(waterRemarks);
+        dest.writeFloat(monthlyBalance);
+        dest.writeFloat(monthlyCharge);
+        dest.writeString(monthlyRemarks);
+        dest.writeString(lastUpdate);
     }
 
     @SuppressWarnings("unused")

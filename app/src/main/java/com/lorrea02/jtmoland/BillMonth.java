@@ -107,11 +107,11 @@ public class BillMonth extends AppCompatActivity {
     public Record convertToRecord(String line)
     {
         String arr[] = line.trim().split(",");
-        if(arr.length != 14) {
+        if(arr.length != 19) {
             return null;
         }
 
-        Record record = new Record(arr[0],arr[1],arr[2],arr[3],arr[4],Integer.parseInt(arr[5]),Integer.parseInt(arr[6]),Float.parseFloat(arr[7]),Float.parseFloat(arr[8]),arr[9],arr[10],arr[11],Integer.parseInt(arr[12]),Float.parseFloat(arr[13]));
+        Record record = new Record(arr[0],arr[1],arr[2],arr[3],arr[4],Integer.parseInt(arr[5]),Integer.parseInt(arr[6]),Float.parseFloat(arr[7]),Float.parseFloat(arr[8]),arr[9],arr[10],arr[11],Integer.parseInt(arr[12]),Float.parseFloat(arr[13]),arr[14],Float.parseFloat(arr[15]),Float.parseFloat(arr[16]),arr[17],arr[18]);
         return record;
     }
 }

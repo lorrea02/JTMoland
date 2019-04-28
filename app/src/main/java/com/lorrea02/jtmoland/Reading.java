@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 public class Reading extends AppCompatActivity {
     TextView tvName, tvAddress, tvSubd, tvMeter, tvAccNum, tvPrevious, tvUnpaid, tvConsumption, tvAmtDue;
@@ -210,6 +211,7 @@ public class Reading extends AppCompatActivity {
                             if(records.get(j).getMeterNumber().equalsIgnoreCase(m_Text.trim()))
                             {
                                 currentSelected = records.get(j);
+                                i = j;
                                 refreshData();
                                 found = true;
                                 break;
@@ -246,19 +248,27 @@ public class Reading extends AppCompatActivity {
                 else
                 {
                     Date today = Calendar.getInstance().getTime();
-                    SimpleDateFormat formatter = new SimpleDateFormat("MMM dd, yyyy hh:mm a");
+                    SimpleDateFormat formatter = new SimpleDateFormat("MMMM dd, yyyy hh:mm a", Locale.US);
                     String dateNow = formatter.format(today);
-                    String headerTxt = centerTxt("JT Moland Realty") + "\n" +
+                    String judith = ConvertToReadable(currentSelected.getDueDate());
+                    String headerTxt = centerTxt(dateNow) + "\n\n" +
+                            centerTxt("JT Moland Realty") + "\n" +
                             centerTxt("Development Corporation") + "\n\n" +
                             centerTxt("STATEMENT OF ACCOUNT") + "\n\n" +
-                            centerTxt("Water Billing") + "\n" +
-                            "________________________________" + "\n\n" +
+                            centerTxt("________________________________") + "\n\n" +
                             "" + currentSelected.getName() + "\n" +
                             "Meter Number: " + currentSelected.getMeterNumber() + "\n" +
                             printAdd("Address: " + currentSelected.getAddress()) + "\n" +
+                            printAdd("Subdivision: " + currentSelected.getSubd()) + "\n" +
                             printAdd("Period Covered: " + currentSelected.getStartDate()) + "-" + currentSelected.getEndDate()  +"\n" +
-                            printAdd("Due Date: " + currentSelected.getDueDate()) + "\n" +
-                            "________________________________" + "\n\n";
+                            printAdd("Due Date: " + judith) + "\n\n" +
+                            centerTxt("WATER BILLING") + "\n" +
+                            centerTxt("________________________________") + "\n\n";
+
+                    if(current == 0 && etPresent.getText().toString().trim().length() > 0)
+                    {
+                        current = Integer.parseInt(etPresent.getText().toString().trim());
+                    }
 
                     String ballot = ("Present Reading: ") + current + "\n"
                             + "Previous Reading: " + currentSelected.getPrevious() + "\n"
@@ -266,13 +276,21 @@ public class Reading extends AppCompatActivity {
                             + "Balance from last: " + currentSelected.getUnpaid() + "\n"
                             + "Current charge: " + ComputeAmtDue(current - currentSelected.getPrevious()) + "\n"
                             + "Other charges: " + currentSelected.getCharges() + "\n"
-                            + "Total charges: " + (ComputeAmtDue(current - currentSelected.getPrevious()) + currentSelected.getUnpaid() + currentSelected.getCharges()) + "\n"
-                            + "\n\n"
-                            + "Note: If payment has been made,\n"
-                            + "please disregard this notice. \n"
-                            + "Thank you\n";
+                            + "Total charges: " + (ComputeAmtDue(current - currentSelected.getPrevious()) + currentSelected.getUnpaid() + currentSelected.getCharges()) + "\n\n";
+                    if(!currentSelected.getWaterRemarks().trim().equals(""))
+                        ballot += "NOTE: " + currentSelected.getWaterRemarks() + "\n\n";
+                    ballot += centerTxt("MONTHLY DUES") +"\n"
+                            + centerTxt("________________________________") + "\n\n"
+                            + "Balance from last: Php " + currentSelected.getMonthlyBalance() + "\n"
+                            + "Current Charge: Php " + currentSelected.getMonthlyCharge() + "\n"
+                            + "Total Charge: Php " + (currentSelected.getMonthlyCharge() + currentSelected.getMonthlyBalance()) + "\n\n";
+                    if(!currentSelected.getMonthlyRemarks().trim().equals(""))
+                        ballot += "NOTE: " + currentSelected.getMonthlyRemarks() + "\n\n";
+                    ballot += centerTxt("Note: If payment has been made,") + "\n"
+                            + centerTxt("Please disregard this notice.") + "\n\n"
+                            + centerTxt("THANK YOU") + "\n";
 
-                    String footerTxt = centerTxt("________________________________") + "\n Updated last: " + dateNow + "\n\n\n\n";
+                    String footerTxt = centerTxt("Updated last: " + ConvertToReadable(currentSelected.getLastUpdate()) + "\n\n\n\n");
 
                     if (isBind) {
                         ArrayList message = new ArrayList<>();
@@ -323,8 +341,8 @@ public class Reading extends AppCompatActivity {
 
     public String centerTxt(String txt) {
 
-        if (txt.length() < 32) {
-            int spaces = 32 - txt.length();
+        if (txt.length() < 48) {
+            int spaces = 48 - txt.length();
             int firstHalf = spaces / 2;
             int secondHalf = spaces - firstHalf;
             for (int i = 0; i < firstHalf; i++) {
@@ -339,17 +357,17 @@ public class Reading extends AppCompatActivity {
 
     public String printAdd(String txt) {
         Log.d("address", txt);
-        if (txt.length() > 32) {
-            int rows = txt.length() / 32;
-            if(txt.length() % 32 != 0)
+        if (txt.length() > 48) {
+            int rows = txt.length() / 48;
+            if(txt.length() % 48 != 0)
                 rows++;
             String ret = "";
 
-            for (int i = 0, ind = 0; i < rows; i++, ind += 32) {
-                if (ind + 32 > txt.length())
+            for (int i = 0, ind = 0; i < rows; i++, ind += 48) {
+                if (ind + 48 > txt.length())
                     ret += txt.substring(ind, txt.length()) + "\n";
                 else
-                    ret += txt.substring(ind, ind + 32) + "\n";
+                    ret += txt.substring(ind, ind + 48) + "\n";
                 Log.d("ret", ret);
             }
             return ret;
@@ -420,5 +438,61 @@ public class Reading extends AppCompatActivity {
             int temp = consumption - 20;
             return 320.0f + (temp * 19.26f);
         }
+    }
+
+    public String ConvertToReadable(String dateInString)
+    {
+        String readable = "";
+        String day = dateInString.substring(6,8);
+        String year = dateInString.substring(0,4);
+        String month = dateInString.substring(4,6);
+        String tempMonth = "";
+        if(month.equals("01"))
+        {
+            tempMonth = "January";
+        }
+        else if(month.equals("02"))
+        {
+            tempMonth = "February";
+        }
+        else if(month.equals("03"))
+        {
+            tempMonth = "March";
+        }
+        else if(month.equals("04"))
+        {
+            tempMonth = "April";
+        }
+        else if(month.equals("05"))
+        {
+            tempMonth = "May";
+        }
+        else if(month.equals("06"))
+        {
+            tempMonth = "June";
+        }else if(month.equals("07"))
+        {
+            tempMonth = "July";
+        }else if(month.equals("08"))
+        {
+            tempMonth = "August";
+        }else if(month.equals("09"))
+        {
+            tempMonth = "September";
+        }else if(month.equals("10"))
+        {
+            tempMonth = "October";
+        }else if(month.equals("11"))
+        {
+            tempMonth = "November";
+        }
+        else if(month.equals("12"))
+        {
+            tempMonth = "December";
+        }
+
+        readable = tempMonth + " " + day + ", " + year;
+
+        return readable;
     }
 }
