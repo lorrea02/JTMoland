@@ -44,9 +44,11 @@ public class Reading extends AppCompatActivity {
     Record currentSelected;
     int current = 0;
     int i = 0;
+    int consumption = 0;
     String billMonth = "";
     Messenger mMessenger = null;
     boolean isBind = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,7 +56,7 @@ public class Reading extends AppCompatActivity {
 
 
         tvName = findViewById(R.id.tvName);
-        tvAddress =findViewById(R.id.tvAddress);
+        tvAddress = findViewById(R.id.tvAddress);
         tvSubd = findViewById(R.id.tvSubd);
         tvMeter = findViewById(R.id.tvMeter);
         tvAccNum = findViewById(R.id.tvAccNum);
@@ -62,7 +64,7 @@ public class Reading extends AppCompatActivity {
         tvUnpaid = findViewById(R.id.tvUnpaid);
         tvConsumption = findViewById(R.id.tvConsumption);
         tvAmtDue = findViewById(R.id.tvAmtDue);
-        btnPrev  = findViewById(R.id.btnPrev);
+        btnPrev = findViewById(R.id.btnPrev);
         btnNext = findViewById(R.id.btnNext);
         btnSearch = findViewById(R.id.btnSearch);
         btnProcess = findViewById(R.id.btnProcess);
@@ -81,15 +83,14 @@ public class Reading extends AppCompatActivity {
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(i != records.size()-1)
-                {
+                if (i != records.size() - 1) {
                     int target = i;
-                    do{
-                        if(target + 1 >= records.size())
+                    do {
+                        if (target + 1 >= records.size())
                             break;
                         target++;
-                    }while(records.get(target) == null);
-                    if(records.get(target) != null) {
+                    } while (records.get(target) == null);
+                    if (records.get(target) != null) {
                         i = target;
                         currentSelected = records.get(target);
                         refreshData();
@@ -101,15 +102,14 @@ public class Reading extends AppCompatActivity {
         btnPrev.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(i != 0)
-                {
+                if (i != 0) {
                     int target = i;
-                    do{
-                        if(target - 1 < 0)
+                    do {
+                        if (target - 1 < 0)
                             break;
                         target--;
-                    }while(records.get(target) == null);
-                    if(records.get(target) != null) {
+                    } while (records.get(target) == null);
+                    if (records.get(target) != null) {
                         i = target;
                         currentSelected = records.get(target);
                         refreshData();
@@ -121,17 +121,13 @@ public class Reading extends AppCompatActivity {
         btnProcess.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!etPresent.getText().toString().trim().equals(""))
-                {
+                if (!etPresent.getText().toString().trim().equals("")) {
                     current = Integer.parseInt(etPresent.getText().toString());
                 }
 
-                if(current < currentSelected.getPrevious())
-                {
+                if (current < currentSelected.getPrevious()) {
                     Toast.makeText(Reading.this, "Please enter correct present reading", Toast.LENGTH_LONG).show();
-                }
-                else
-                {
+                } else {
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(Reading.this);
                     builder.setCancelable(true);
@@ -141,19 +137,32 @@ public class Reading extends AppCompatActivity {
                             new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    int consumption = current - currentSelected.getPrevious();
+                                    consumption = current - currentSelected.getPrevious();
+                                    float charges = 0f;
+                                    if (consumption == 0) {
+                                        charges = 0;
+                                    } else {
+                                        charges = currentSelected.getCharges();
+                                    }
+
                                     tvConsumption.setText("" + consumption);
-                                    float amt = (ComputeAmtDue(consumption) + currentSelected.getUnpaid() + currentSelected.getCharges());
+                                    float amt = (ComputeAmtDue(consumption) + currentSelected.getUnpaid() + charges);
                                     tvAmtDue.setText("" + amt);
 
                                     currentSelected.setPresent(Integer.parseInt(etPresent.getText().toString().trim()));
                                     currentSelected.setAmtDue(amt);
                                     currentSelected.setRead(1);
+
+                                    float water = (ComputeAmtDue(current - currentSelected.getPrevious()) + currentSelected.getUnpaid() + charges);
+                                    float monthly = currentSelected.getMonthlyBalance() + currentSelected.getMonthlyCharge();
+                                    currentSelected.setNetAmt(water + monthly);
+
+
+
                                     records.set(i, currentSelected);
 
                                     String text = "";
-                                    for(int i = 0; i< records.size(); i++)
-                                    {
+                                    for (int i = 0; i < records.size(); i++) {
                                         text += records.get(i).toString() + "\n";
                                     }
                                     text = text.trim();
@@ -162,9 +171,10 @@ public class Reading extends AppCompatActivity {
                                     File dir2 = new File(dir, "Export");
                                     String export = "export_" + billMonth + ".csv";
                                     File file = new File(dir2, export);
-                                    try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-                                            new FileOutputStream(file), "utf-8"))) {
-                                        writer.write(text);
+                                    try {
+                                        FileWriter f2 = new FileWriter(file, false);
+                                        f2.write(text);
+                                        f2.close();
                                     } catch (UnsupportedEncodingException e) {
                                         e.printStackTrace();
                                     } catch (FileNotFoundException e) {
@@ -206,10 +216,8 @@ public class Reading extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         String m_Text = input.getText().toString();
                         boolean found = false;
-                        for(int j = 0; j < records.size(); j++)
-                        {
-                            if(records.get(j).getMeterNumber().equalsIgnoreCase(m_Text.trim()))
-                            {
+                        for (int j = 0; j < records.size(); j++) {
+                            if (records.get(j).getMeterNumber().equalsIgnoreCase(m_Text.trim())) {
                                 currentSelected = records.get(j);
                                 i = j;
                                 refreshData();
@@ -217,12 +225,9 @@ public class Reading extends AppCompatActivity {
                                 break;
                             }
                         }
-                        if(!found)
-                        {
+                        if (!found) {
                             Toast.makeText(Reading.this, "Meter Number not found!", Toast.LENGTH_LONG).show();
-                        }
-                        else
-                        {
+                        } else {
                             dialog.dismiss();
                         }
                     }
@@ -241,12 +246,10 @@ public class Reading extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                if(tvAmtDue.getText().toString().trim().equals(""))
-                {
+                if (tvAmtDue.getText().toString().trim().equals("")) {
                     Toast.makeText(Reading.this, "Please process the record first.", Toast.LENGTH_LONG).show();
-                }
-                else
-                {
+                } else {
+                    float charges = 0f;
                     Date today = Calendar.getInstance().getTime();
                     SimpleDateFormat formatter = new SimpleDateFormat("MMMM dd, yyyy hh:mm a", Locale.US);
                     String dateNow = formatter.format(today);
@@ -260,14 +263,19 @@ public class Reading extends AppCompatActivity {
                             "Meter Number: " + currentSelected.getMeterNumber() + "\n" +
                             printAdd("Address: " + currentSelected.getAddress()) + "\n" +
                             printAdd("Subdivision: " + currentSelected.getSubd()) + "\n" +
-                            printAdd("Period Covered: " + currentSelected.getStartDate()) + "-" + currentSelected.getEndDate()  +"\n" +
+                            printAdd("Period Covered: " + currentSelected.getStartDate()) + "-" + currentSelected.getEndDate() + "\n" +
                             printAdd("Due Date: " + judith) + "\n\n" +
                             centerTxt("WATER BILLING") + "\n" +
                             centerTxt("________________________________") + "\n\n";
 
-                    if(current == 0 && etPresent.getText().toString().trim().length() > 0)
-                    {
+                    if (current == 0 && etPresent.getText().toString().trim().length() > 0) {
                         current = Integer.parseInt(etPresent.getText().toString().trim());
+                    }
+
+                    if (consumption <= 0) {
+                        charges = 0;
+                    } else {
+                        charges = currentSelected.getCharges();
                     }
 
                     String ballot = ("Present Reading: ") + current + "\n"
@@ -275,17 +283,17 @@ public class Reading extends AppCompatActivity {
                             + "Consumption in cu. m: " + (current - currentSelected.getPrevious()) + "\n\n"
                             + "Balance from last: " + currentSelected.getUnpaid() + "\n"
                             + "Current charge: " + ComputeAmtDue(current - currentSelected.getPrevious()) + "\n"
-                            + "Other charges: " + currentSelected.getCharges() + "\n"
-                            + "Total charges: " + (ComputeAmtDue(current - currentSelected.getPrevious()) + currentSelected.getUnpaid() + currentSelected.getCharges()) + "\n\n";
-                    if(!currentSelected.getWaterRemarks().trim().equals(""))
-                        ballot += "NOTE: " + currentSelected.getWaterRemarks() + "\n\n";
-                    ballot += centerTxt("MONTHLY DUES") +"\n"
+                            + "Other charges: " + charges + "\n"
+                            + "Total charges: " + (ComputeAmtDue(current - currentSelected.getPrevious()) + currentSelected.getUnpaid() + charges) + "\n\n";
+                    if (!currentSelected.getWaterRemarks().trim().equals(""))
+                        ballot += "NOTE: " + currentSelected.getWaterRemarks().toUpperCase() + "\n\n";
+                    ballot += centerTxt("MONTHLY DUES") + "\n"
                             + centerTxt("________________________________") + "\n\n"
                             + "Balance from last: Php " + currentSelected.getMonthlyBalance() + "\n"
                             + "Current Charge: Php " + currentSelected.getMonthlyCharge() + "\n"
                             + "Total Charge: Php " + (currentSelected.getMonthlyCharge() + currentSelected.getMonthlyBalance()) + "\n\n";
-                    if(!currentSelected.getMonthlyRemarks().trim().equals(""))
-                        ballot += "NOTE: " + currentSelected.getMonthlyRemarks() + "\n\n";
+                    if (!currentSelected.getMonthlyRemarks().trim().equals(""))
+                        ballot += "NOTE: " + currentSelected.getMonthlyRemarks().toUpperCase() + "\n\n";
                     ballot += centerTxt("Note: If payment has been made,") + "\n"
                             + centerTxt("Please disregard this notice.") + "\n\n"
                             + centerTxt("THANK YOU") + "\n";
@@ -359,7 +367,7 @@ public class Reading extends AppCompatActivity {
         Log.d("address", txt);
         if (txt.length() > 48) {
             int rows = txt.length() / 48;
-            if(txt.length() % 48 != 0)
+            if (txt.length() % 48 != 0)
                 rows++;
             String ret = "";
 
@@ -379,8 +387,7 @@ public class Reading extends AppCompatActivity {
         //
     }
 
-    public void refreshData()
-    {
+    public void refreshData() {
         tvName.setText(currentSelected.getName().toUpperCase());
         tvAddress.setText(currentSelected.getAddress());
         tvSubd.setText(currentSelected.getSubd());
@@ -388,8 +395,7 @@ public class Reading extends AppCompatActivity {
         tvAccNum.setText("Account Number : " + currentSelected.getAccountNum());
         tvPrevious.setText("Previous Reading : " + currentSelected.getPrevious());
         tvUnpaid.setText("Unpaid Balance : " + currentSelected.getUnpaid());
-        if(currentSelected.getRead() == 1)
-        {
+        if (currentSelected.getRead() == 1) {
             etPresent.setText(currentSelected.getPresent() + "");
             int consump = currentSelected.getPresent() - currentSelected.getPrevious();
             tvConsumption.setText("" + consump);
@@ -410,9 +416,7 @@ public class Reading extends AppCompatActivity {
             builder.setIcon(R.drawable.iconmsg);
 
             builder.show();
-        }
-        else
-        {
+        } else {
             etPresent.setEnabled(true);
             btnProcess.setEnabled(true);
             etPresent.setText("");
@@ -421,73 +425,49 @@ public class Reading extends AppCompatActivity {
         }
     }
 
-    public float ComputeAmtDue(int consumption)
-    {
-        if(consumption == 0)
-        {
+    public float ComputeAmtDue(int consumption) {
+        if (consumption == 0) {
             return 0;
-        }
-        else if(consumption <= 10)
+        } else if (consumption <= 10)
             return 150.0f;
-        else if (consumption > 10 && consumption <= 20)
-        {
+        else if (consumption > 10 && consumption <= 20) {
             int temp = consumption - 10;
             return 150.0f + (temp * 17);
-        }else
-        {
+        } else {
             int temp = consumption - 20;
             return 320.0f + (temp * 19.26f);
         }
     }
 
-    public String ConvertToReadable(String dateInString)
-    {
+    public String ConvertToReadable(String dateInString) {
         String readable = "";
-        String day = dateInString.substring(6,8);
-        String year = dateInString.substring(0,4);
-        String month = dateInString.substring(4,6);
+        String day = dateInString.substring(6, 8);
+        String year = dateInString.substring(0, 4);
+        String month = dateInString.substring(4, 6);
         String tempMonth = "";
-        if(month.equals("01"))
-        {
+        if (month.equals("01")) {
             tempMonth = "January";
-        }
-        else if(month.equals("02"))
-        {
+        } else if (month.equals("02")) {
             tempMonth = "February";
-        }
-        else if(month.equals("03"))
-        {
+        } else if (month.equals("03")) {
             tempMonth = "March";
-        }
-        else if(month.equals("04"))
-        {
+        } else if (month.equals("04")) {
             tempMonth = "April";
-        }
-        else if(month.equals("05"))
-        {
+        } else if (month.equals("05")) {
             tempMonth = "May";
-        }
-        else if(month.equals("06"))
-        {
+        } else if (month.equals("06")) {
             tempMonth = "June";
-        }else if(month.equals("07"))
-        {
+        } else if (month.equals("07")) {
             tempMonth = "July";
-        }else if(month.equals("08"))
-        {
+        } else if (month.equals("08")) {
             tempMonth = "August";
-        }else if(month.equals("09"))
-        {
+        } else if (month.equals("09")) {
             tempMonth = "September";
-        }else if(month.equals("10"))
-        {
+        } else if (month.equals("10")) {
             tempMonth = "October";
-        }else if(month.equals("11"))
-        {
+        } else if (month.equals("11")) {
             tempMonth = "November";
-        }
-        else if(month.equals("12"))
-        {
+        } else if (month.equals("12")) {
             tempMonth = "December";
         }
 

@@ -79,14 +79,14 @@ public class MyService extends Service {
             if (pairedDevices.size() > 0) {
                 for (BluetoothDevice device : pairedDevices) {
                     //BlueTooth Printer
-                    Toast.makeText(MyService.this, "" + device, Toast.LENGTH_LONG).show();
+                    Toast.makeText(MyService.this, "" + device.getName(), Toast.LENGTH_LONG).show();
                     if (device.getName().equals("Richtech")) {
                         mmDevice = device;
                         break;
                     }
                 }
             }
-            Toast.makeText(MyService.this,"Bluetooth device found" + mmDevice.toString(), Toast.LENGTH_LONG).show();
+            //Toast.makeText(MyService.this,"Bluetooth device found" + mmDevice.toString(), Toast.LENGTH_LONG).show();
         } catch (NullPointerException e) {
             e.printStackTrace();
         } catch (Exception e) {

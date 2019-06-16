@@ -24,6 +24,7 @@ public class Record implements Parcelable {
     private float monthlyCharge;
     private String monthlyRemarks;
     private String lastUpdate;
+    private float netAmt;
 
     @Override
     public String toString() {
@@ -45,13 +46,14 @@ public class Record implements Parcelable {
                 + monthlyBalance + ","
                 + monthlyCharge + ","
                 + monthlyRemarks + ","
-                + lastUpdate;
+                + lastUpdate + ","
+                + netAmt;
     }
 
     public Record() {
     }
 
-    public Record(String meterNumber, String name, String address, String subd, String accountNum, int previous, int present, float unpaid, float charges, String dueDate, String startDate, String endDate, int read, float amtDue, String waterRemarks, float monthlyBalance, float monthlyCharge, String monthlyRemarks, String lastUpdate) {
+    public Record(String meterNumber, String name, String address, String subd, String accountNum, int previous, int present, float unpaid, float charges, String dueDate, String startDate, String endDate, int read, float amtDue, String waterRemarks, float monthlyBalance, float monthlyCharge, String monthlyRemarks, String lastUpdate, float netAmt) {
         this.meterNumber = meterNumber;
         this.name = name;
         this.address = address;
@@ -71,6 +73,7 @@ public class Record implements Parcelable {
         this.monthlyCharge = monthlyCharge;
         this.monthlyRemarks = monthlyRemarks;
         this.lastUpdate = lastUpdate;
+        this.netAmt = netAmt;
     }
 
     public String getMeterNumber() {
@@ -225,6 +228,14 @@ public class Record implements Parcelable {
         this.lastUpdate = lastUpdate;
     }
 
+    public float getNetAmt() {
+        return netAmt;
+    }
+
+    public void setNetAmt(float netAmt) {
+        this.netAmt = netAmt;
+    }
+
     protected Record(Parcel in) {
         meterNumber = in.readString();
         name = in.readString();
@@ -245,6 +256,7 @@ public class Record implements Parcelable {
         monthlyCharge = in.readFloat();
         monthlyRemarks = in.readString();
         lastUpdate = in.readString();
+        netAmt = in.readFloat();
     }
 
     @Override
@@ -273,6 +285,7 @@ public class Record implements Parcelable {
         dest.writeFloat(monthlyCharge);
         dest.writeString(monthlyRemarks);
         dest.writeString(lastUpdate);
+        dest.writeFloat(netAmt);
     }
 
     @SuppressWarnings("unused")
